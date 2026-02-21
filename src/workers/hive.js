@@ -3,6 +3,7 @@
 import { Workflows, Agents, Logs, Config } from '../lib/hive.js';
 import { spawn } from 'child_process';
 import { randomUUID } from 'crypto';
+import { existsSync } from 'fs';
 import fetch from 'node-fetch';
 
 const WORKER_ID = `hive-worker-${process.pid}`;
@@ -127,32 +128,38 @@ async function runAgentTask(workflow, phase) {
   
   let repo = workflow.repo;
   
-  // If it's a GitHub URL, clone it first
+  // If it's a GitHub URL, clone it first (if not already cloned)
   if (repo && repo.includes('github.com')) {
     console.log(`Detected GitHub URL, cloning repo: ${repo}`);
     const workspaceDir = `/home/ubuntu/the-hive/workspaces/${workflow.id}`;
     
     try {
-      // Extract owner/repo from URL
-      const match = repo.match(/github\.com[/:]([\w-]+)\/([\w-]+)/);
-      if (match) {
-        const ghRepo = `https://github.com/${match[1]}/${match[2]}.git`;
-        
-        // Clone the repo
-        await new Promise((resolve, reject) => {
-          const proc = spawn('/usr/bin/git', ['clone', '--depth', '1', ghRepo, workflow.id], {
-            cwd: '/home/ubuntu/the-hive/workspaces',
-            stdio: 'inherit'
+      // Check if already cloned
+      if (!existsSync(workspaceDir)) {
+        // Extract owner/repo from URL
+        const match = repo.match(/github\.com[/:]([\w-]+)\/([\w-]+)/);
+        if (match) {
+          const ghRepo = `https://github.com/${match[1]}/${match[2]}.git`;
+          
+          // Clone the repo
+          await new Promise((resolve, reject) => {
+            const proc = spawn('/usr/bin/git', ['clone', '--depth', '1', ghRepo, workflow.id], {
+              cwd: '/home/ubuntu/the-hive/workspaces',
+              stdio: 'inherit'
+            });
+            proc.on('close', (code) => {
+              if (code === 0) resolve();
+              else reject(new Error(`git clone failed with code ${code}`));
+            });
           });
-          proc.on('close', (code) => {
-            if (code === 0) resolve();
-            else reject(new Error(`git clone failed with code ${code}`));
-          });
-        });
-        
-        repo = workspaceDir;
-        console.log(`Cloned to ${repo}`);
+          
+          console.log(`Cloned to ${workspaceDir}`);
+        }
+      } else {
+        console.log(`Repo already cloned to ${workspaceDir}`);
       }
+      
+      repo = workspaceDir;
     } catch (err) {
       return { ok: false, error: `Failed to clone repo: ${err.message}` };
     }
