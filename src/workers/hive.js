@@ -193,18 +193,40 @@ async function runAgentTask(workflow, phase) {
     
     let stdout = '';
     let stderr = '';
+    let lastLogTime = 0;
+    
+    // Send output to API every 5 seconds for real-time visibility
+    const logToApi = async (text) => {
+      const now = Date.now();
+      if (now - lastLogTime > 5000 && workflow && workflow.id) {
+        lastLogTime = now;
+        try {
+          await apiCall('/api/logs', 'POST', {
+            workflowId: workflow.id,
+            agentId: 'hive-runner',
+            message: `[agent] ${text.substring(0, 500)}`,
+            level: 'info'
+          });
+        } catch (e) {
+          // Ignore logging errors
+        }
+      }
+    };
     
     proc.stdout.on('data', (data) => {
       const text = data.toString();
       stdout += text;
       // Also log to console
       process.stdout.write(`[agent] ${text}`);
+      // Also send to API for real-time visibility
+      logToApi(text);
     });
     
     proc.stderr.on('data', (data) => {
       const text = data.toString();
       stderr += text;
       process.stderr.write(`[agent error] ${text}`);
+      logToApi(`[error] ${text}`);
     });
     
     proc.on('close', (code) => {
