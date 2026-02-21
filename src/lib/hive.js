@@ -2,10 +2,11 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.HIVE_DB || path.join(__dirname, '../../the-hive.db');
+
+const now = () => Math.floor(Date.now() / 1000);
 
 // Initialize database
 const db = new Database(DB_PATH);
@@ -19,42 +20,46 @@ db.exec(`
     task TEXT NOT NULL,
     status TEXT DEFAULT 'pending',
     phase TEXT DEFAULT 'planning',
-    created_at INTEGER DEFAULT (strftime('%s', 'now')),
-    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
-  );
+    created_at INTEGER,
+    updated_at INTEGER
+  )
+`);
 
+db.exec(`
   CREATE TABLE IF NOT EXISTS agents (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     workflow_id TEXT,
     status TEXT DEFAULT 'idle',
     current_task TEXT,
-    last_seen INTEGER,
-    FOREIGN KEY (workflow_id) REFERENCES workflows(id)
-  );
+    last_seen INTEGER
+  )
+`);
 
+db.exec(`
   CREATE TABLE IF NOT EXISTS logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workflow_id TEXT,
     agent_id TEXT,
     message TEXT NOT NULL,
     level TEXT DEFAULT 'info',
-    timestamp INTEGER DEFAULT (strftime('%s', 'now')),
-    FOREIGN KEY (workflow_id) REFERENCES workflows(id),
-    FOREIGN KEY (agent_id) REFERENCES agents(id)
-  );
+    timestamp INTEGER
+  )
+`);
 
+db.exec(`
   CREATE TABLE IF NOT EXISTS config (
     key TEXT PRIMARY KEY,
     value TEXT
-  );
+  )
 `);
 
 // Workflow operations
 export const Workflows = {
   create(id, task, repo, name = 'default') {
-    const stmt = db.prepare('INSERT INTO workflows (id, task, repo, name) VALUES (?, ?, ?, ?)');
-    stmt.run(id, task, repo, name);
+    const t = now();
+    const stmt = db.prepare('INSERT INTO workflows (id, task, repo, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)');
+    stmt.run(id, task, repo || '', name, t, t);
     return this.get(id);
   },
 
@@ -69,7 +74,7 @@ export const Workflows = {
   update(id, updates) {
     const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
     const values = Object.values(updates);
-    db.prepare(`UPDATE workflows SET ${fields}, updated_at = strftime('%s', 'now') WHERE id = ?`).run(...values, id);
+    db.prepare(`UPDATE workflows SET ${fields}, updated_at = ? WHERE id = ?`).run(...values, now(), id);
     return this.get(id);
   },
 
@@ -81,8 +86,8 @@ export const Workflows = {
 // Agent operations
 export const Agents = {
   register(id, name) {
-    const stmt = db.prepare('INSERT OR REPLACE INTO agents (id, name, last_seen) VALUES (?, ?, strftime("%s", "now"))');
-    stmt.run(id, name);
+    const stmt = db.prepare('INSERT OR REPLACE INTO agents (id, name, last_seen) VALUES (?, ?, ?)');
+    stmt.run(id, name, now());
     return this.get(id);
   },
 
@@ -95,20 +100,20 @@ export const Agents = {
   },
 
   setStatus(id, status, task = null) {
-    const stmt = db.prepare('UPDATE agents SET status = ?, current_task = ?, last_seen = strftime("%s", "now") WHERE id = ?');
-    stmt.run(status, task, id);
+    const stmt = db.prepare('UPDATE agents SET status = ?, current_task = ?, last_seen = ? WHERE id = ?');
+    stmt.run(status, task, now(), id);
   },
 
   heartbeat(id) {
-    db.prepare('UPDATE agents SET last_seen = strftime("%s", "now") WHERE id = ?').run(id);
+    db.prepare('UPDATE agents SET last_seen = ? WHERE id = ?').run(now(), id);
   }
 };
 
 // Logging
 export const Logs = {
   add(workflowId, agentId, message, level = 'info') {
-    const stmt = db.prepare('INSERT INTO logs (workflow_id, agent_id, message, level) VALUES (?, ?, ?, ?)');
-    stmt.run(workflowId, agentId, message, level);
+    const stmt = db.prepare('INSERT INTO logs (workflow_id, agent_id, message, level, timestamp) VALUES (?, ?, ?, ?, ?)');
+    stmt.run(workflowId, agentId, message, level, now());
   },
 
   get(workflowId, limit = 100) {

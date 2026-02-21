@@ -1,219 +1,268 @@
 // The Hive - Worker (Autonomous Agent Orchestration)
+// Uses OpenClaw's native cron system to run agents
 import { Workflows, Agents, Logs, Config } from '../lib/hive.js';
 import { spawn } from 'child_process';
+import { randomUUID } from 'crypto';
 
-// Configuration
-const POLL_INTERVAL = 5000; // 5 seconds
-const WORKER_ID = `worker-${process.pid}`;
+const WORKER_ID = `hive-worker-${process.pid}`;
 
 // Register this worker
 Agents.register(WORKER_ID, 'hive-worker');
 
 console.log(`Hive Worker ${WORKER_ID} starting...`);
 
-// Workflow phases and their agents
+// Workflow phases and their prompts
 const PHASES = {
-  planning: { agent: 'planner', prompt: 'Decompose task into user stories' },
-  setup: { agent: 'setup', prompt: 'Prepare development environment' },
-  implementing: { agent: 'developer', prompt: 'Implement user stories' },
-  verifying: { agent: 'verifier', prompt: 'Verify implementation against requirements' },
-  testing: { agent: 'tester', prompt: 'Run tests and validate' },
-  reviewing: { agent: 'reviewer', prompt: 'Create pull request and review' }
+  planning: {
+    prompt: (task, repo, runId) => `You are a task planner. Decompose this task into ordered user stories.
+
+Task: ${task}
+Repository: ${repo}
+
+Analyze the task and break it down into small, achievable user stories. Each story should be testable and independently implementable.
+
+Reply in this format:
+STATUS: done
+STORIES:
+1. [Story description]
+2. [Story description]
+...`
+  },
+  setup: {
+    prompt: (task, repo, runId) => `You are a devops engineer. Prepare the development environment.
+
+Task: ${task}
+Repository: ${repo}
+
+1. cd to the repository
+2. Check if build/test setup exists (package.json, Makefile, etc.)
+3. Run any setup commands
+4. Run baseline tests if available
+5. Report your findings
+
+Reply:
+STATUS: done
+FINDINGS: [what you found]`
+  },
+  implementing: {
+    prompt: (task, repo, runId) => `You are a software developer. Implement the task.
+
+Task: ${task}
+Repository: ${repo}
+
+Make small, incremental commits. Focus on getting something working first, then refine.
+
+Reply:
+STATUS: done
+CHANGES: [summary of changes made]`
+  },
+  verifying: {
+    prompt: (task, repo, runId) => `You are a QA engineer. Verify the implementation.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Verify the implementation against requirements
+2. Check all acceptance criteria
+3. Report any issues
+
+Reply:
+STATUS: done
+VERIFIED: yes/no
+ISSUES: [any issues found]`
+  },
+  testing: {
+    prompt: (task, repo, runId) => `You are a tester. Run tests.
+
+Task: ${task}
+Repository: ${repo}
+
+Run tests and report results.
+
+Reply:
+STATUS: done
+TESTS: pass/fail
+DETAILS: [test results]`
+  },
+  reviewing: {
+    prompt: (task, repo, runId) => `You are a code reviewer. Create a PR.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Make sure changes are committed
+2. Create a pull request with good description
+3. Include testing instructions
+
+Reply:
+STATUS: done
+PR_URL: [link to PR or "none if not pushed"]`
+  }
 };
 
-// Get current phase info
-function getPhaseInfo(phase) {
-  return PHASES[phase] || null;
+const PHASE_ORDER = ['planning', 'setup', 'implementing', 'verifying', 'testing', 'reviewing'];
+
+// Get next phase
+function getNextPhase(currentPhase) {
+  const idx = PHASE_ORDER.indexOf(currentPhase);
+  if (idx < 0 || idx >= PHASE_ORDER.length - 1) return null;
+  return PHASE_ORDER[idx + 1];
 }
 
-// Spawn an agent session
-async function spawnAgent(workflow, phaseInfo) {
-  const phase = workflow.phase;
-  const task = workflow.task;
-  const repo = workflow.repo;
-  const runId = workflow.id;
+// Run an agent task using openclaw cron
+async function runAgentTask(workflow, phase) {
+  const phaseInfo = PHASES[phase];
+  if (!phaseInfo) return { ok: false, error: 'Unknown phase' };
   
-  console.log(`Spawning ${phaseInfo.agent} for workflow ${runId}`);
+  const prompt = phaseInfo.prompt(workflow.task, workflow.repo, workflow.id);
+  const cronName = `hive-${workflow.id}-${phase}`;
   
-  // Build the prompt based on phase
-  const prompt = buildPrompt(phase, task, repo, runId);
+  console.log(`Creating cron job for ${phase} phase of workflow ${workflow.id}`);
   
-  // Spawn via OpenClaw sessions_spawn
-  return new Promise((resolve, reject) => {
+  // Create a cron job that runs the agent
+  // Using at (one-shot) instead of recurring
+  const atTime = new Date(Date.now() + 5000); // 5 seconds from now
+  const isoTime = atTime.toISOString();
+  
+  // The cron job will create a session with the agent and run the task
+  // We use systemEvent to inject a message into the main session
+  // Then check for results
+  
+  // For now, let's use a simpler approach: run the agent directly
+  // and capture the output
+  
+  return new Promise((resolve) => {
+    // Build the command to run
+    const cronPayload = {
+      text: `Run agent task for ${phase}: ${prompt}`,
+      contextMessages: []
+    };
+    
+    // Actually, let's try using sessions_send to trigger an agent
+    // But first, let's see if we can just run the agent command directly
+    
+    // Try running openclaw agent directly
     const cmd = 'openclaw';
     const args = [
-      'sessions', 'spawn',
-      '--agent-id', `${phaseInfo.agent}-${runId}`,
+      'agent',
+      '--local',
       '--message', prompt,
-      '--model', 'minimax/minimax-m2.5',
-      '--timeout', '300000'
+      '--thinking', 'medium',
+      '--timeout', '300'
     ];
     
     console.log(`Running: ${cmd} ${args.join(' ')}`);
     
     const proc = spawn(cmd, args, {
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env }
     });
     
     let stdout = '';
     let stderr = '';
     
     proc.stdout.on('data', (data) => {
-      stdout += data.toString();
-      console.log(`[spawn] ${data.toString().trim()}`);
+      const text = data.toString();
+      stdout += text;
+      console.log(`[agent] ${text.substring(0, 200)}`);
     });
     
     proc.stderr.on('data', (data) => {
-      stderr += data.toString();
-      console.error(`[spawn error] ${data.toString().trim()}`);
+      const text = data.toString();
+      stderr += text;
+      console.error(`[agent error] ${text.substring(0, 200)}`);
     });
     
     proc.on('close', (code) => {
       if (code === 0) {
-        resolve({ ok: true, stdout });
+        resolve({ ok: true, output: stdout });
       } else {
         resolve({ ok: false, error: stderr || `Exit code ${code}` });
       }
     });
+    
+    // Timeout after 5 minutes
+    setTimeout(() => {
+      proc.kill();
+      resolve({ ok: false, error: 'Timeout' });
+    }, 300000);
   });
-}
-
-// Build prompt based on phase
-function buildPrompt(phase, task, repo, runId) {
-  const base = `Task: ${task}\nRepo: ${repo}\n`;
-  
-  switch (phase) {
-    case 'planning':
-      return `${base}
-Decompose this task into ordered user stories.
-Reply with:
-STATUS: done
-STORIES: [list of stories]
-
-Focus on small, achievable stories.`;
-    
-    case 'setup':
-      return `${base}
-Prepare the development environment:
-1. cd into repo
-2. Check build/test setup
-3. Run baseline tests
-4. Report findings
-
-Reply with STATUS: done`;
-    
-    case 'implementing':
-      return `${base}
-Implement the planned user stories.
-Make small, incremental commits.
-Reply with STATUS: done, CHANGES: what changed`;
-    
-    case 'verifying':
-      return `${base}
-Verify implementation against requirements.
-Check all acceptance criteria are met.
-Reply with STATUS: done, VERIFIED: yes/no`;
-    
-    case 'testing':
-      return `${base}
-Run tests, report results.
-Reply with STATUS: done, TESTS: pass/fail`;
-    
-    case 'reviewing':
-      return `${base}
-Create a Pull Request with your changes.
-Reply with STATUS: done, PR_URL: link`;
-    
-    default:
-      return `${base}Complete this task. Reply with STATUS: done`;
-  }
 }
 
 // Process a workflow
 async function processWorkflow(workflow) {
-  const phase = workflow.status === 'pending' ? 'planning' : workflow.phase;
-  const phaseInfo = getPhaseInfo(phase);
+  const phase = workflow.phase;
   
-  if (!phaseInfo) {
-    console.log(`Workflow ${workflow.id} complete or unknown phase: ${phase}`);
+  if (phase === 'done' || workflow.status === 'complete') {
+    console.log(`Workflow ${workflow.id} already complete`);
     return;
   }
   
-  // Check if there's actually work to do
-  if (workflow.status === 'running' && phase !== 'planning') {
-    // Check if previous phase is done
-    const prevPhase = getPrevPhase(phase);
-    // For simplicity, we'll just advance
+  const phaseInfo = PHASES[phase];
+  if (!phaseInfo) {
+    console.log(`Unknown phase: ${phase} for workflow ${workflow.id}`);
+    return;
   }
   
-  // Mark as running
-  Workflows.update(workflow.id, { status: 'running' });
-  Agents.setStatus(phaseInfo.agent, 'working', workflow.task);
+  console.log(`Processing workflow ${workflow.id} - phase: ${phase}`);
   
-  Logs.add(workflow.id, phaseInfo.agent, `Starting ${phase} phase`);
+  // Update status to running
+  Workflows.update(workflow.id, { status: 'running' });
+  Agents.setStatus('hive-runner', 'working', `${phase}: ${workflow.task}`);
+  Logs.add(workflow.id, 'hive-runner', `Starting ${phase} phase`);
   
   try {
-    const result = await spawnAgent(workflow, phaseInfo);
+    const result = await runAgentTask(workflow, phase);
     
     if (result.ok) {
-      // Advance to next phase
-      const nextPhase = getNextPhase(phase);
+      Logs.add(workflow.id, 'hive-runner', `Completed ${phase} phase`);
       
+      const nextPhase = getNextPhase(phase);
       if (nextPhase) {
         Workflows.update(workflow.id, { 
           phase: nextPhase,
           status: 'pending'
         });
-        Logs.add(workflow.id, phaseInfo.agent, `Completed ${phase}, advanced to ${nextPhase}`);
+        Logs.add(workflow.id, 'hive-runner', `Advanced to ${nextPhase} phase`);
       } else {
         Workflows.update(workflow.id, { 
           status: 'complete',
           phase: 'done'
         });
-        Logs.add(workflow.id, phaseInfo.agent, 'Workflow complete!');
+        Logs.add(workflow.id, 'hive-runner', 'Workflow complete!');
       }
     } else {
-      Logs.add(workflow.id, phaseInfo.agent, `Error: ${result.error}`, 'error');
+      Logs.add(workflow.id, 'hive-runner', `Error: ${result.error}`, 'error');
       Workflows.update(workflow.id, { status: 'failed' });
     }
   } catch (err) {
-    Logs.add(workflow.id, phaseInfo.agent, `Exception: ${err.message}`, 'error');
+    Logs.add(workflow.id, 'hive-runner', `Exception: ${err.message}`, 'error');
     Workflows.update(workflow.id, { status: 'failed' });
   }
   
-  Agents.setStatus(phaseInfo.agent, 'idle');
-}
-
-function getPrevPhase(phase) {
-  const phases = Object.keys(PHASES);
-  const idx = phases.indexOf(phase);
-  return idx > 0 ? phases[idx - 1] : null;
-}
-
-function getNextPhase(phase) {
-  const phases = Object.keys(PHASES);
-  const idx = phases.indexOf(phase);
-  return idx < phases.length - 1 ? phases[idx + 1] : null;
+  Agents.setStatus('hive-runner', 'idle');
 }
 
 // Main loop
+const POLL_INTERVAL = 10000; // 10 seconds
+
 async function loop() {
-  console.log('Polling for work...');
+  console.log('Polling for pending workflows...');
   
-  // Get pending workflows
-  const workflows = Workflows.list();
-  
-  for (const workflow of workflows) {
-    if (workflow.status === 'pending') {
-      console.log(`Processing workflow ${workflow.id}: ${workflow.task}`);
-      await processWorkflow(workflow);
+  try {
+    const workflows = Workflows.list();
+    
+    for (const workflow of workflows) {
+      if (workflow.status === 'pending') {
+        await processWorkflow(workflow);
+      }
     }
+    
+    Agents.heartbeat(WORKER_ID);
+  } catch (err) {
+    console.error('Error in loop:', err.message);
   }
   
-  // Heartbeat
-  Agents.heartbeat(WORKER_ID);
-  
-  // Schedule next loop
   setTimeout(loop, POLL_INTERVAL);
 }
 
