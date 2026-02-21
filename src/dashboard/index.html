@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Hive - Workflow Dashboard</title>
+  <title>🐝 The Hive - Workflow Dashboard</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -17,120 +17,96 @@
     .header {
       background: #161b22;
       border-bottom: 1px solid #30363d;
-      padding: 20px 30px;
+      padding: 15px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     
-    .logo {
-      font-size: 28px;
-      font-weight: bold;
-      color: #f0b429;
-    }
-    
+    .logo { font-size: 24px; font-weight: bold; color: #f0b429; }
     .logo span { color: #fff; }
     
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 30px;
+    .controls { display: flex; gap: 15px; align-items: center; }
+    
+    select, input, button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 14px;
     }
     
-    .stats {
+    button {
+      background: #238636;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    button:hover { background: #2ea043; }
+    
+    .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+    
+    .kanban {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 15px;
+      margin-top: 20px;
     }
     
-    .stat-card {
+    .column {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 20px;
+      min-height: 400px;
     }
     
-    .stat-value {
-      font-size: 36px;
+    .column-header {
+      padding: 15px;
+      border-bottom: 1px solid #30363d;
       font-weight: bold;
-      color: #fff;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1px;
     }
     
-    .stat-label {
-      color: #8b949e;
-      font-size: 14px;
-      margin-top: 5px;
-    }
+    .column-planning .column-header { color: #f0b429; }
+    .column-setup .column-header { color: #58a6ff; }
+    .column-implementing .column-header { color: #a371f7; }
+    .column-verifying .column-header { color: #f778ba; }
+    .column-testing .column-header { color: #3fb950; }
+    .column-reviewing .column-header { color: #ff7b72; }
     
-    .section-title {
-      font-size: 20px;
-      margin-bottom: 15px;
-      color: #fff;
-    }
-    
-    .workflows-grid {
-      display: grid;
-      gap: 15px;
-    }
+    .column-content { padding: 10px; }
     
     .workflow-card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .workflow-info h3 {
-      color: #fff;
-      margin-bottom: 5px;
-    }
-    
-    .workflow-meta {
-      color: #8b949e;
-      font-size: 13px;
-    }
-    
-    .status-badge {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-    
-    .status-pending { background: #f0b42933; color: #f0b429; }
-    .status-running { background: #58a6ff33; color: #58a6ff; }
-    .status-complete { background: #3fb95033; color: #3fb950; }
-    .status-failed { background: #f8514933; color: #f85149; }
-    
-    .phase-bar {
-      display: flex;
-      gap: 8px;
-      margin-top: 15px;
-    }
-    
-    .phase {
-      flex: 1;
-      padding: 8px;
       background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    
+    .workflow-card { position: relative; }
+    .workflow-card:hover { border-color: #58a6ff; }
+    .workflow-card:hover .delete-btn { display: block; }
+    
+    .workflow-card h4 { color: #fff; margin-bottom: 5px; font-size: 14px; }
+    .workflow-card .meta { color: #8b949e; font-size: 11px; }
+    
+    .delete-btn {
+      display: none;
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: #f85149;
+      border: none;
       border-radius: 4px;
-      text-align: center;
-      font-size: 11px;
-      text-transform: uppercase;
-    }
-    
-    .phase.active {
-      background: #58a6ff;
       color: #fff;
-    }
-    
-    .phase.done {
-      background: #3fb950;
-      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
     }
     
     .new-workflow {
@@ -138,108 +114,142 @@
       border: 1px solid #30363d;
       border-radius: 8px;
       padding: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 15px;
-    }
+    .form-row { display: flex; gap: 10px; margin-top: 10px; }
+    .form-row input { flex: 1; }
     
-    input, textarea {
-      width: 100%;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      padding: 12px;
-      color: #fff;
-      font-size: 14px;
-    }
-    
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #58a6ff;
-    }
-    
-    button {
-      background: #238636;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    
-    button:hover { background: #2ea043; }
-    
-    .agents-section {
-      margin-top: 40px;
-    }
-    
-    .agents-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 15px;
-    }
-    
-    .agent-card {
+    .agent-bar {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
       padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
     }
     
-    .agent-status {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
-    }
-    
+    .agent-status { display: flex; align-items: center; gap: 8px; }
+    .agent-dot { width: 10px; height: 10px; border-radius: 50%; }
     .agent-idle { background: #8b949e; }
     .agent-working { background: #58a6ff; }
     
-    .logs-section {
-      margin-top: 40px;
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
     }
+    .status-pending { background: #f0b42933; color: #f0b429; }
+    .status-running { background: #58a6ff33; color: #58a6ff; }
+    .status-complete { background: #3fb95033; color: #3fb950; }
+    .status-failed { background: #f8514933; color: #f85149; }
     
-    .log-entry {
+    .connection-status { font-size: 12px; }
+    .connection-status.connected { color: #3fb950; }
+    .connection-status.disconnected { color: #f85149; }
+    
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
       background: #161b22;
       border: 1px solid #30363d;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 900px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { color: #fff; }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .log-entry {
+      padding: 8px 12px;
       border-radius: 6px;
-      padding: 10px 15px;
       margin-bottom: 8px;
       font-family: monospace;
       font-size: 13px;
+      background: #21262d;
+    }
+    .log-entry.error { border-left: 3px solid #f85149; }
+    .log-entry.info { border-left: 3px solid #58a6ff; }
+    .log-time { color: #8b949e; margin-right: 10px; }
+    .log-agent { color: #f0b429; margin-right: 10px; }
+    
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
     }
     
-    .log-time { color: #8b949e; margin-right: 10px; }
-    .log-level { 
-      padding: 2px 8px; 
-      border-radius: 4px; 
-      font-size: 11px; 
-      margin-right: 10px;
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
     }
-    .log-level-info { background: #58a6ff33; color: #58a6ff; }
-    .log-level-error { background: #f8514933; color: #f85149; }
+    
+    .stat-value { font-size: 28px; font-weight: bold; color: #fff; }
+    .stat-label { font-size: 12px; color: #8b949e; margin-top: 5px; }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="logo">🐝 The <span>Hive</span></div>
-    <div id="connection-status" style="color: #8b949e;">Connecting...</div>
+    <div class="controls">
+      <span class="connection-status" id="connection-status">Connecting...</span>
+      <select id="model-select">
+        <option value="minimax/minimax-m2.5">MiniMax M2.5</option>
+        <option value="anthropic/claude-sonnet-4-20250514">Claude Sonnet 4</option>
+        <option value="openrouter/auto">Auto</option>
+      </select>
+      <label style="font-size: 12px; color: #8b949e;">
+        <input type="checkbox" id="auto-refresh" checked> Auto-refresh
+      </label>
+    </div>
   </div>
   
   <div class="container">
-    <div class="stats">
+    <div class="stats-bar">
       <div class="stat-card">
         <div class="stat-value" id="stat-total">0</div>
-        <div class="stat-label">Total Workflows</div>
+        <div class="stat-label">Total</div>
       </div>
       <div class="stat-card">
         <div class="stat-value" id="stat-running">0</div>
@@ -250,36 +260,93 @@
         <div class="stat-label">Completed</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" id="stat-agents">0</div>
-        <div class="stat-label">Active Agents</div>
+        <div class="stat-value" id="stat-failed">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+    </div>
+    
+    <div class="agent-bar">
+      <div class="agent-status">
+        <span class="agent-dot" id="worker-dot"></span>
+        <span id="worker-status">Worker</span>
+      </div>
+      <div style="color: #8b949e; font-size: 12px;">
+        Last seen: <span id="worker-heartbeat">-</span>
       </div>
     </div>
     
     <div class="new-workflow">
-      <h3 class="section-title" style="margin-bottom: 15px;">🚀 New Workflow</h3>
+      <h3>🚀 New Workflow</h3>
       <div class="form-row">
-        <input type="text" id="task-input" placeholder="Task description (e.g., 'Fix bug in game')">
-        <input type="text" id="repo-input" placeholder="Repository path (e.g., /path/to/repo)">
+        <input type="text" id="task-input" placeholder="What do you want to build? (e.g., 'a hello world website')">
+        <input type="text" id="repo-input" placeholder="GitHub URL (e.g., https://github.com/user/repo) or local path">
+        <button id="start-btn" onclick="startWorkflow()">Start</button>
       </div>
-      <button onclick="startWorkflow()">Start Workflow</button>
-    </div>
-    
-    <h3 class="section-title">Workflows</h3>
-    <div class="workflows-grid" id="workflows-list">
-      <p style="color: #8b949e;">No workflows yet</p>
-    </div>
-    
-    <div class="agents-section">
-      <h3 class="section-title">Agents</h3>
-      <div class="agents-grid" id="agents-list">
-        <p style="color: #8b949e;">No agents registered</p>
+      <div class="form-row" style="margin-top: 10px;">
+        <button onclick="showReportIssue()" style="background: #f85149;">🐛 Report Bug</button>
       </div>
     </div>
     
-    <div class="logs-section">
-      <h3 class="section-title">Recent Logs</h3>
-      <div id="logs-list">
-        <p style="color: #8b949e;">No logs yet</p>
+    <!-- Report Issue Modal -->
+    <div class="modal-overlay" id="issue-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>🐛 Report a Bug</h3>
+          <button class="modal-close" onclick="closeIssueModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">GitHub Repository</label>
+            <input type="text" id="issue-repo" placeholder="https://github.com/user/repo" style="width: 100%;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Issue Number (optional)</label>
+            <input type="number" id="issue-number" placeholder="Leave blank to create new issue">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Bug Description</label>
+            <textarea id="issue-description" rows="4" placeholder="Describe what's broken..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <button onclick="submitIssue()" style="background: #f85149;">Create Fix Workflow</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal for workflow details -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modal-title">Workflow Details</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modal-content"></div>
+      </div>
+    </div>
+    
+    <div class="kanban" id="kanban">
+      <div class="column column-planning">
+        <div class="column-header">📋 Planning</div>
+        <div class="column-content" id="planning"></div>
+      </div>
+      <div class="column column-setup">
+        <div class="column-header">⚙️ Setup</div>
+        <div class="column-content" id="setup"></div>
+      </div>
+      <div class="column column-implementing">
+        <div class="column-header">💻 Implementing</div>
+        <div class="column-content" id="implementing"></div>
+      </div>
+      <div class="column column-verifying">
+        <div class="column-header">✅ Verifying</div>
+        <div class="column-content" id="verifying"></div>
+      </div>
+      <div class="column column-testing">
+        <div class="column-header">🧪 Testing</div>
+        <div class="column-content" id="testing"></div>
+      </div>
+      <div class="column column-reviewing">
+        <div class="column-header">📝 Review</div>
+        <div class="column-content" id="reviewing"></div>
       </div>
     </div>
   </div>
@@ -288,6 +355,7 @@
     let ws = null;
     let workflows = [];
     let agents = [];
+    let autoRefresh = true;
     
     // Connect to WebSocket
     function connect() {
@@ -296,12 +364,12 @@
       
       ws.onopen = () => {
         document.getElementById('connection-status').textContent = '🟢 Connected';
-        document.getElementById('connection-status').style.color = '#3fb950';
+        document.getElementById('connection-status').className = 'connection-status connected';
       };
       
       ws.onclose = () => {
         document.getElementById('connection-status').textContent = '🔴 Disconnected';
-        document.getElementById('connection-status').style.color = '#f85149';
+        document.getElementById('connection-status').className = 'connection-status disconnected';
         setTimeout(connect, 3000);
       };
       
@@ -313,110 +381,240 @@
     
     function handleMessage(data) {
       if (data.type === 'workflow-created' || data.type === 'workflow-updated') {
-        loadWorkflows();
+        loadData();
+      } else if (data.type === 'log-added') {
+        // Refresh current modal if open
+        const modal = document.getElementById('modal');
+        if (modal.classList.contains('active')) {
+          const workflowId = modal.dataset.workflowId;
+          if (workflowId === data.workflowId) {
+            showWorkflow(workflowId);
+          }
+        }
+        // Also refresh the kanban in case status changed
+        loadData();
       }
     }
     
-    async function loadWorkflows() {
-      const res = await fetch('/api/workflows');
-      workflows = await res.json();
-      renderWorkflows();
-      updateStats();
-    }
-    
-    async function loadAgents() {
-      const res = await fetch('/api/agents');
-      agents = await res.json();
-      renderAgents();
-      updateStats();
-    }
-    
-    function renderWorkflows() {
-      const container = document.getElementById('workflows-list');
-      
-      if (workflows.length === 0) {
-        container.innerHTML = '<p style="color: #8b949e;">No workflows yet</p>';
-        return;
+    async function loadData() {
+      try {
+        const [wfRes, agentRes] = await Promise.all([
+          fetch('/api/workflows'),
+          fetch('/api/agents')
+        ]);
+        workflows = await wfRes.json();
+        agents = await agentRes.json();
+        render();
+      } catch (e) {
+        console.error('Failed to load data:', e);
       }
-      
-      const phases = ['planning', 'setup', 'implementing', 'verifying', 'testing', 'reviewing'];
-      
-      container.innerHTML = workflows.map(w => `
-        <div class="workflow-card">
-          <div class="workflow-info">
-            <h3>${w.task}</h3>
-            <div class="workflow-meta">
-              ${w.repo ? w.repo + ' • ' : ''}
-              Created ${new Date(w.created_at * 1000).toLocaleString()}
-            </div>
-            <div class="phase-bar">
-              ${phases.map((p, i) => {
-                const isActive = w.phase === p && w.status === 'running';
-                const isDone = phases.indexOf(w.phase) > i || w.status === 'complete';
-                return `<div class="phase ${isActive ? 'active' : ''} ${isDone && !isActive ? 'done' : ''}">${p}</div>`;
-              }).join('')}
-            </div>
-          </div>
-          <span class="status-badge status-${w.status}">${w.status}</span>
-        </div>
-      `).join('');
     }
     
-    function renderAgents() {
-      const container = document.getElementById('agents-list');
-      
-      if (agents.length === 0) {
-        container.innerHTML = '<p style="color: #8b949e;">No agents registered</p>';
-        return;
-      }
-      
-      container.innerHTML = agents.map(a => `
-        <div class="agent-card">
-          <div style="display: flex; align-items: center; margin-bottom: 8px;">
-            <span class="agent-status agent-${a.status}"></span>
-            <strong>${a.name}</strong>
-          </div>
-          <div style="color: #8b949e; font-size: 12px;">
-            ${a.status === 'idle' ? 'Waiting for work' : a.current_task || 'Working...'}
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    function updateStats() {
+    function render() {
+      // Update stats
       document.getElementById('stat-total').textContent = workflows.length;
       document.getElementById('stat-running').textContent = workflows.filter(w => w.status === 'running' || w.status === 'pending').length;
       document.getElementById('stat-complete').textContent = workflows.filter(w => w.status === 'complete').length;
-      document.getElementById('stat-agents').textContent = agents.filter(a => a.status === 'working').length;
+      document.getElementById('stat-failed').textContent = workflows.filter(w => w.status === 'failed').length;
+      
+      // Update worker status
+      const worker = agents.find(a => a.name.includes('worker'));
+      if (worker) {
+        document.getElementById('worker-dot').className = worker.status === 'working' ? 'agent-dot agent-working' : 'agent-dot agent-idle';
+        document.getElementById('worker-status').textContent = worker.status === 'working' ? 'Worker: Working' : 'Worker: Idle';
+        document.getElementById('worker-heartbeat').textContent = worker.last_seen ? new Date(worker.last_seen * 1000).toLocaleTimeString() : '-';
+      }
+      
+      // Clear columns
+      ['planning', 'setup', 'implementing', 'verifying', 'testing', 'reviewing'].forEach(phase => {
+        document.getElementById(phase).innerHTML = '';
+      });
+      
+      // Render workflows
+      const phaseMap = {
+        'planning': 'planning',
+        'setup': 'setup', 
+        'implementing': 'implementing',
+        'verifying': 'verifying',
+        'testing': 'testing',
+        'reviewing': 'reviewing',
+        'done': 'reviewing'
+      };
+      
+      workflows.forEach(w => {
+        const phase = phaseMap[w.phase] || 'planning';
+        const col = document.getElementById(phase);
+        if (col) {
+          col.innerHTML += `
+            <div class="workflow-card" onclick="showWorkflow('${w.id}')">
+              <button class="delete-btn" onclick="event.stopPropagation(); deleteWorkflow('${w.id}')">×</button>
+              <h4>${w.task}</h4>
+              <div class="meta">
+                ${w.repo || 'No repo'}
+                <span class="status-badge status-${w.status}">${w.status}</span>
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
+    
+    async function deleteWorkflow(id) {
+      if (!confirm('Delete this workflow?')) return;
+      
+      try {
+        await fetch('/api/workflows/' + id, { method: 'DELETE' });
+        loadData();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
     
     async function startWorkflow() {
+      const btn = document.getElementById('start-btn');
+      const originalText = btn.textContent;
+      btn.textContent = 'Creating...';
+      btn.disabled = true;
+      
       const task = document.getElementById('task-input').value;
       const repo = document.getElementById('repo-input').value;
       
-      if (!task) return alert('Task is required');
+      try {
+        const res = await fetch('/api/workflows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: 'wf-' + Date.now(), task, repo })
+        });
+        
+        if (res.ok) {
+          document.getElementById('task-input').value = '';
+          document.getElementById('repo-input').value = '';
+          loadData();
+        } else {
+          alert('Failed to create workflow');
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
       
-      const id = Date.now().toString();
-      
-      await fetch('/api/workflows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, task, repo })
-      });
-      
-      document.getElementById('task-input').value = '';
-      document.getElementById('repo-input').value = '';
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
+    
+    function showReportIssue() {
+      document.getElementById('issue-modal').classList.add('active');
+    }
+    
+    function closeIssueModal() {
+      document.getElementById('issue-modal').classList.remove('active');
+    }
+    
+    async function submitIssue() {
+      const repo = document.getElementById('issue-repo').value;
+      const issueNum = document.getElementById('issue-number').value;
+      const description = document.getElementById('issue-description').value;
+      
+      if (!repo || !description) {
+        alert('Please fill in repository and description');
+        return;
+      }
+      
+      let task = description;
+      if (issueNum) {
+        task = `Fix GitHub issue #${issueNum}: ${description}`;
+      } else {
+        task = `Fix bug: ${description}`;
+      }
+      
+      try {
+        const res = await fetch('/api/workflows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id: 'bugfix-' + Date.now(), 
+            task, 
+            repo,
+            type: 'bugfix'
+          })
+        });
+        
+        if (res.ok) {
+          closeIssueModal();
+          document.getElementById('issue-repo').value = '';
+          document.getElementById('issue-number').value = '';
+          document.getElementById('issue-description').value = '';
+          loadData();
+        } else {
+          alert('Failed to create workflow');
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+    
+    async function showWorkflow(id) {
+      const workflow = workflows.find(w => w.id === id);
+      if (!workflow) return;
+      
+      // Fetch logs
+      const logsRes = await fetch(`/api/workflows/${id}/logs`);
+      const logs = await logsRes.json();
+      
+      const modal = document.getElementById('modal');
+      const title = document.getElementById('modal-title');
+      const content = document.getElementById('modal-content');
+      
+      title.textContent = `Workflow: ${workflow.task}`;
+      modal.dataset.workflowId = id;
+      
+      let html = `
+        <div style="margin-bottom: 20px;">
+          <strong>Status:</strong> <span class="status-badge status-${workflow.status}">${workflow.status}</span><br>
+          <strong>Phase:</strong> ${workflow.phase}<br>
+          <strong>Repository:</strong> ${workflow.repo || 'None'}<br>
+          <strong>Created:</strong> ${new Date(workflow.created_at * 1000).toLocaleString()}
+        </div>
+        <h4 style="margin-bottom: 10px; color: #fff;">Logs:</h4>
+      `;
+      
+      if (logs.length === 0) {
+        html += '<p style="color: #8b949e;">No logs yet</p>';
+      } else {
+        // Show newest first
+        logs.reverse().forEach(log => {
+          const time = new Date(log.timestamp * 1000).toLocaleTimeString();
+          html += `
+            <div class="log-entry ${log.level}">
+              <span class="log-time">${time}</span>
+              <span class="log-agent">${log.agent_id || 'system'}:</span>
+              ${log.message}
+            </div>
+          `;
+        });
+      }
+      
+      content.innerHTML = html;
+      modal.classList.add('active');
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+    
+    // Close modal on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
     
     // Initialize
     connect();
-    loadWorkflows();
-    loadAgents();
+    loadData();
     
-    // Refresh periodically
+    // Auto-refresh
     setInterval(() => {
-      loadWorkflows();
-      loadAgents();
+      if (autoRefresh && document.getElementById('auto-refresh').checked) {
+        loadData();
+      }
     }, 5000);
   </script>
 </body>
