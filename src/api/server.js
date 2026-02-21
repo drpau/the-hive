@@ -14,17 +14,24 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 
 app.use(express.json());
 
-// Serve static dashboard
-app.use(express.static(path.join(__dirname, '../dashboard')));
+// === REST API ROUTES (must come before SPA fallback) ===
 
-// SPA fallback - serve index.html for all non-API routes
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../dashboard/index.html'));
-  }
+// Hello World page
+app.get('/hello', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Hello World</title>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f0f0; }
+    h1 { color: #333; }
+  </style>
+</head>
+<body>
+  <h1>Hello World from The Hive! 🐝</h1>
+</body>
+</html>`);
 });
-
-// REST API
 
 // List workflows
 app.get('/api/workflows', (req, res) => {
@@ -94,10 +101,25 @@ app.get('/api/workflows/:id/logs', (req, res) => {
 app.post('/api/logs', (req, res) => {
   const { workflowId, agentId, message, level } = req.body;
   Logs.add(workflowId, agentId, message, level);
+  // Broadcast to all clients
+  broadcast({ type: 'log-added', workflowId, agentId, message, level });
   res.json({ ok: true });
 });
 
-// WebSocket handling
+// === STATIC FILES & SPA FALLBACK ===
+
+// Serve static dashboard
+app.use(express.static(path.join(__dirname, '../dashboard')));
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../dashboard/index.html'));
+  }
+});
+
+// === WEBSOCKET ===
+
 const clients = new Set();
 
 wss.on('connection', (ws) => {
