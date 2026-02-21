@@ -140,7 +140,7 @@ async function runAgentTask(workflow, phase) {
         
         // Clone the repo
         await new Promise((resolve, reject) => {
-          const proc = spawn('git', ['clone', '--depth', '1', ghRepo, workflow.id], {
+          const proc = spawn('/usr/bin/git', ['clone', '--depth', '1', ghRepo, workflow.id], {
             cwd: '/home/ubuntu/the-hive/workspaces',
             stdio: 'inherit'
           });
@@ -232,8 +232,10 @@ async function processWorkflow(workflow) {
   
   console.log(`Processing workflow ${workflow.id} - phase: ${phase}`);
   
-  // Use API (triggers WebSocket broadcast)
-  await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { status: 'running' });
+  // Use API (triggers WebSocket broadcast) - only if not already running
+  if (workflow.status !== 'running') {
+    await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { status: 'running' });
+  }
   await apiCall('/api/logs', 'POST', { 
     workflowId: workflow.id, 
     agentId: 'hive-runner', 
@@ -338,7 +340,7 @@ async function pollGitHubIssues() {
         
         // Get issues (using GitHub API via gh CLI)
         const result = await new Promise((resolve) => {
-          const proc = spawn('gh', ['issue', 'list', '--repo', `${owner}/${repo}`, '--state', 'open', '--limit', '5', '--json', 'number,title,createdAt'], {
+          const proc = spawn('/usr/bin/gh', ['issue', 'list', '--repo', `${owner}/${repo}`, '--state', 'open', '--limit', '5', '--json', 'number,title,createdAt'], {
             stdio: ['pipe', 'pipe', 'pipe']
           });
           
@@ -402,7 +404,8 @@ async function loop() {
     const workflows = await apiCall('/api/workflows');
     
     for (const workflow of workflows) {
-      if (workflow.status === 'pending') {
+      // Process pending or running workflows
+      if (workflow.status === 'pending' || workflow.status === 'running') {
         await processWorkflow(workflow);
       }
     }

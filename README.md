@@ -8,7 +8,9 @@ Autonomous AI workflow orchestration with dashboard - inspired by Antfarm but bu
 - 🤖 **Autonomous Agents** - Multiple agents working in parallel
 - 📈 **Real-time Updates** - WebSocket-powered live updates
 - 🔄 **Workflow Phases** - Planning → Setup → Implementation → Verification → Testing → Review
-- 🔗 **GitHub Integration** - Automatic PR creation
+- 🔗 **GitHub Integration** - Automatic issue detection and PR creation
+- 🐛 **Bug Reporting** - Report bugs directly from dashboard
+- 👁️ **GitHub Issue Polling** - Auto-detect new issues on linked repos
 
 ## Architecture
 
@@ -34,22 +36,85 @@ Autonomous AI workflow orchestration with dashboard - inspired by Antfarm but bu
      └─────────────────┘
 ```
 
-## Quick Start
+## Prerequisites
+
+1. **OpenClaw** - The Hive uses OpenClaw to run AI agents
+2. **Node.js** - v18 or higher
+3. **GitHub CLI (`gh`)** - For GitHub issue polling and PR creation
+4. **OpenRouter API Key** - For AI model access
+
+## Setup
+
+### 1. Install Dependencies
 
 ```bash
-# Install dependencies
 cd the-hive
 npm install
+```
 
-# Start the API server
+### 2. Configure OpenClaw
+
+The Hive requires OpenClaw to be installed and configured with an AI provider:
+
+```bash
+# Run OpenClaw setup
+openclaw configure
+
+# Or set up manually by configuring your openclaw.json with:
+# - API keys for your AI provider (OpenRouter, Anthropic, OpenAI, etc.)
+# - Model preferences
+```
+
+### 3. Authenticate with GitHub
+
+```bash
+# Login to GitHub CLI
+gh auth login
+
+# Required scopes: repo, read:org
+```
+
+### 4. Start The Hive
+
+```bash
+# Start the API server (one terminal)
 npm start
 
-# In another terminal, start the worker
+# Start the worker (another terminal)
 npm run worker
 
 # Open dashboard
 # Visit http://localhost:3334
 ```
+
+## Usage
+
+### Creating a Workflow
+
+1. Enter a task description (e.g., "create a hello world website")
+2. Enter a GitHub repository URL (optional) - will be cloned automatically
+3. Click "Start"
+
+The Hive will:
+- Clone the repository if a GitHub URL is provided
+- Plan the task into user stories
+- Set up the development environment
+- Implement the solution
+- Verify and test
+- Create a pull request
+
+### Reporting Bugs
+
+1. Click "Report Bug" on the dashboard
+2. Enter the GitHub repository URL
+3. Describe the bug
+4. Click "Create Fix Workflow"
+
+The Hive will create a bugfix workflow.
+
+### GitHub Issue Polling
+
+The linked Hive automatically polls GitHub repositories for new issues every 60 seconds and creates fix workflows automatically.
 
 ## API
 
@@ -72,6 +137,33 @@ npm run worker
 Environment variables:
 - `PORT` - API server port (default: 3334)
 - `HIVE_DB` - SQLite database path
+
+## Troubleshooting
+
+### "Failed to create workflow" - Database error
+```bash
+# Fix database permissions
+chmod 777 the-hive
+chmod 666 the-hive/the-hive.db
+```
+
+### GitHub issues not being detected
+```bash
+# Ensure GitHub CLI is authenticated
+gh auth status
+
+# Re-authenticate if needed
+gh auth login
+```
+
+### Agent tasks failing
+```bash
+# Check OpenClaw configuration
+openclaw config get
+
+# Test agent directly
+openclaw agent --session-id test --message "hello"
+```
 
 ## License
 
