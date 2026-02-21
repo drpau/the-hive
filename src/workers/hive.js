@@ -97,18 +97,20 @@ TESTS: pass/fail
 DETAILS: [test results]`
   },
   reviewing: {
-    prompt: (task, repo, runId) => `You are a code reviewer. Create a PR.
+    prompt: (task, repo, runId) => `You are a code reviewer. Create a PR and close the linked issue.
 
 Task: ${task}
 Repository: ${repo}
 
 1. Make sure changes are committed
 2. Create a pull request with good description
-3. Include testing instructions
+3. If this fixes a GitHub issue (e.g., "Fix GitHub issue #N"), close the issue after PR is created
+4. Include testing instructions
 
 Reply:
 STATUS: done
-PR_URL: [link to PR or "none if not pushed"]`
+PR_URL: [link to PR or "none if not pushed"]
+ISSUE_CLOSED: yes/no`
   }
 };
 
@@ -294,6 +296,38 @@ async function processWorkflow(workflow) {
           message: 'Workflow complete!',
           level: 'info'
         });
+        
+        // Close GitHub issue if this is a GitHub issue fix
+        const issueMatch = workflow.task.match(/Fix GitHub issue #(\d+)/);
+        if (issueMatch && workflow.repo && workflow.repo.includes('github.com')) {
+          const issueNum = issueMatch[1];
+          const repoMatch = workflow.repo.match(/github\.com[/:]([\w-]+)\/([\w-]+)/);
+          if (repoMatch) {
+            const owner = repoMatch[1];
+            const repo = repoMatch[2];
+            console.log(`Closing GitHub issue #${issueNum} in ${owner}/${repo}`);
+            
+            try {
+              await new Promise((resolve, reject) => {
+                const proc = spawn('/usr/bin/gh', ['issue', 'close', issueNum, '--repo', `${owner}/${repo}`, '-r', 'Fixed'], {
+                  stdio: 'inherit'
+                });
+                proc.on('close', (code) => {
+                  if (code === 0) resolve();
+                  else reject(new Error(`gh issue close failed: ${code}`));
+                });
+              });
+              await apiCall('/api/logs', 'POST', {
+                workflowId: workflow.id,
+                agentId: 'hive-runner',
+                message: `Closed GitHub issue #${issueNum}`,
+                level: 'info'
+              });
+            } catch (err) {
+              console.error('Failed to close issue:', err.message);
+            }
+          }
+        }
       }
     } else {
       await apiCall('/api/logs', 'POST', { 
