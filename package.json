@@ -1,0 +1,18 @@
+{
+  "name": "the-hive",
+  "version": "1.0.0",
+  "description": "Autonomous AI workflow orchestration with dashboard",
+  "main": "src/api/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/api/server.js",
+    "worker": "node src/workers/hive.js",
+    "dashboard": "npx serve src/dashboard"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "ws": "^8.16.0",
+    "dotenv": "^16.4.1"
+  }
+}
