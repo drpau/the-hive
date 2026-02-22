@@ -29,7 +29,6 @@ jobs:
           CHANGES=$(cat CHANGELOG.md | python3 -c "
 import json,sys
 content = sys.stdin.read()
-# Extract changes for current version
 import re
 match = re.search(r'## \[([^\]]+)\](.+?)(?=## \[|$)', content, re.DOTALL)
 if match:
@@ -37,18 +36,20 @@ if match:
 else:
     print('See CHANGELOG.md for details')
 ")
-          echo "changes<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "changes<<EOF"
+            echo "$CHANGES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          release_name: Release v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
           body: |
             ${{ steps.changelog.outputs.changes }}
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
