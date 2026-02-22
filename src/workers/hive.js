@@ -304,6 +304,56 @@ SECURITY_REPORT: [summary]`
 
 const SECURITY_PHASE_ORDER = ['scanning', 'analysis', 'remediation', 'reviewing'];
 
+// Docs workflow phases
+const DOCS_PHASES = {
+  research: {
+    prompt: (task, repo, runId) => `You are a technical writer. Research the documentation that needs updating.
+
+Task: ${task}
+Repository: ${repo}
+
+Research:
+1. Review the current documentation
+2. Identify what needs to change
+3. Check for related documentation that may also need updates
+
+Reply:
+STATUS: done
+CURRENT_STATE: [what the docs currently say]
+NEEDS_UPDATE: [what needs to change]`
+  },
+  updating: {
+    prompt: (task, repo, runId) => `You are a technical writer. Update the documentation.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Make the necessary documentation updates
+2. Ensure consistency with existing docs
+3. Check for typos and clarity
+
+Reply:
+STATUS: done
+UPDATES: [summary of changes made]`
+  },
+  reviewing: {
+    prompt: (task, repo, runId) => `You are a documentation reviewer. Review the changes and create a PR.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Review documentation changes for accuracy
+2. Ensure proper formatting
+3. Commit changes and create PR
+
+Reply:
+STATUS: done
+PR_URL: [link to PR or "none"]`
+  }
+};
+
+const DOCS_PHASE_ORDER = ['research', 'updating', 'reviewing'];
+
 // Get next phase based on workflow type
 function getNextPhase(currentPhase, workflowType = 'bugfix') {
   let phases;
@@ -311,6 +361,8 @@ function getNextPhase(currentPhase, workflowType = 'bugfix') {
     phases = IMPROVEMENT_PHASE_ORDER;
   } else if (workflowType === 'security') {
     phases = SECURITY_PHASE_ORDER;
+  } else if (workflowType === 'docs') {
+    phases = DOCS_PHASE_ORDER;
   } else {
     phases = PHASE_ORDER;
   }
@@ -327,6 +379,8 @@ async function runAgentTask(workflow, phase) {
     phaseSet = IMPROVEMENT_PHASES;
   } else if (workflowType === 'security') {
     phaseSet = SECURITY_PHASES;
+  } else if (workflowType === 'docs') {
+    phaseSet = DOCS_PHASES;
   } else {
     phaseSet = PHASES;
   }
@@ -460,6 +514,8 @@ async function processWorkflow(workflow) {
     phaseSet = IMPROVEMENT_PHASES;
   } else if (workflowType === 'security') {
     phaseSet = SECURITY_PHASES;
+  } else if (workflowType === 'docs') {
+    phaseSet = DOCS_PHASES;
   } else {
     phaseSet = PHASES;
   }
@@ -478,6 +534,10 @@ async function processWorkflow(workflow) {
     } else if (workflowType === 'security') {
       console.log(`Security workflow - updating initial phase to scanning`);
       await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { phase: 'scanning' });
+      return;
+    } else if (workflowType === 'docs') {
+      console.log(`Docs workflow - updating initial phase to research`);
+      await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { phase: 'research' });
       return;
     }
   }

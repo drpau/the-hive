@@ -287,6 +287,7 @@
         <button onclick="showIdea()" style="background: #238636;">💡 Submit Idea</button>
         <button onclick="showSecurity()" style="background: #a371f7;">🔒 Security Review</button>
         <button onclick="showRelease()" style="background: #1f6feb;">📦 Create Release</button>
+        <button onclick="showDocs()" style="background: #6e7681;">📝 Update Docs</button>
       </div>
     </div>
     
@@ -402,6 +403,37 @@
             <textarea id="release-changes" rows="4" placeholder="List the changes in this release..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
           </div>
           <button onclick="submitRelease()" style="background: #1f6feb;">Create Release</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Docs Update Modal -->
+    <div class="modal-overlay" id="docs-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>📝 Update Documentation</h3>
+          <button class="modal-close" onclick="closeDocsModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">GitHub Repository</label>
+            <input type="text" id="docs-repo" placeholder="https://github.com/user/repo" style="width: 100%;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Documentation to Update</label>
+            <select id="docs-type" style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;">
+              <option value="README">README.md</option>
+              <option value="CONFIG">CONFIG.md</option>
+              <option value="CHANGELOG">CHANGELOG.md</option>
+              <option value="CONTRIBUTING">CONTRIBUTING.md</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Changes to Document</label>
+            <textarea id="docs-description" rows="4" placeholder="Describe what changed and needs documentation..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <button onclick="submitDocs()" style="background: #6e7681;">Create Docs Workflow</button>
         </div>
       </div>
     </div>
@@ -748,6 +780,57 @@
       
       btn.textContent = originalText;
       btn.disabled = false;
+    }
+    
+    function showDocs() {
+      document.getElementById('docs-modal').classList.add('active');
+    }
+    
+    function closeDocsModal() {
+      document.getElementById('docs-modal').classList.remove('active');
+    }
+    
+    async function submitDocs() {
+      const repo = document.getElementById('docs-repo').value;
+      const docsType = document.getElementById('docs-type').value;
+      const description = document.getElementById('docs-description').value;
+      
+      if (!repo || !description) {
+        alert('Please fill in repository and description');
+        return;
+      }
+      
+      const typeLabels = {
+        README: 'README.md',
+        CONFIG: 'CONFIG.md',
+        CHANGELOG: 'CHANGELOG.md',
+        CONTRIBUTING: 'CONTRIBUTING.md',
+        other: 'Documentation'
+      };
+      
+      try {
+        const res = await fetch('/api/workflows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id: 'docs-' + Date.now(), 
+            task: `Update ${typeLabels[docsType]} documentation: ${description}`, 
+            repo,
+            type: 'docs'
+          })
+        });
+        
+        if (res.ok) {
+          closeDocsModal();
+          document.getElementById('docs-repo').value = '';
+          document.getElementById('docs-description').value = '';
+          loadData();
+        } else {
+          alert('Failed to create workflow');
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
     
     async function submitIssue() {

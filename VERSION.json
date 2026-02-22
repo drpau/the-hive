@@ -1,8 +1,10 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "released": "2026-02-22",
-  "type": "patch",
+  "type": "minor",
   "changes": [
-    "Updated README with workflow types, breaking changes, and versioning documentation"
+    "Added Docs Update workflow type (research → updating → reviewing)",
+    "Added CONTRIBUTING.md with documentation rule",
+    "Added documentation update to workflow types in README"
   ]
 }

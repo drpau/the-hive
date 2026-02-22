@@ -2,6 +2,14 @@
 
 All notable changes to The Hive will be documented in this file.
 
+## [1.0.3] - 2026-02-22
+
+### Added
+- Docs Update workflow (research → updating → reviewing)
+- CONTRIBUTING.md with documentation rule
+- Documentation update workflow button in dashboard
+- Docs workflow type in worker
+
 ## [1.0.2] - 2026-02-22
 
 ### Added
