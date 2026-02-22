@@ -1,6 +1,7 @@
 {
   "version": "1.0.0",
   "released": "2026-02-22",
+  "type": "major",
   "changes": [
     "Security workflow added",
     "Improvement workflow phases: research, design, implementing, verifying, testing, reviewing",
