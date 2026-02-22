@@ -286,6 +286,7 @@
         <button onclick="showReportIssue()" style="background: #f85149;">🐛 Report Bug</button>
         <button onclick="showIdea()" style="background: #238636;">💡 Submit Idea</button>
         <button onclick="showSecurity()" style="background: #a371f7;">🔒 Security Review</button>
+        <button onclick="showRelease()" style="background: #1f6feb;">📦 Create Release</button>
       </div>
     </div>
     
@@ -361,6 +362,31 @@
             <textarea id="security-description" rows="4" placeholder="Any specific concerns or areas to focus on..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
           </div>
           <button onclick="submitSecurity()" style="background: #a371f7;">Create Security Workflow</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Release Modal -->
+    <div class="modal-overlay" id="release-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>📦 Create Release</h3>
+          <button class="modal-close" onclick="closeReleaseModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Release Type</label>
+            <select id="release-type" style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;">
+              <option value="patch">Patch (bug fixes) - 1.0.0 → 1.0.1</option>
+              <option value="minor">Minor (new features) - 1.0.0 → 1.1.0</option>
+              <option value="major">Major (breaking changes) - 1.0.0 → 2.0.0</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Changes Summary</label>
+            <textarea id="release-changes" rows="4" placeholder="List the changes in this release..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <button onclick="submitRelease()" style="background: #1f6feb;">Create Release</button>
         </div>
       </div>
     </div>
@@ -652,6 +678,57 @@
       } catch (e) {
         alert('Error: ' + e.message);
       }
+    }
+    
+    function showRelease() {
+      document.getElementById('release-modal').classList.add('active');
+    }
+    
+    function closeReleaseModal() {
+      document.getElementById('release-modal').classList.remove('active');
+    }
+    
+    async function submitRelease() {
+      const releaseType = document.getElementById('release-type').value;
+      const changes = document.getElementById('release-changes').value;
+      
+      if (!changes) {
+        alert('Please provide changes summary');
+        return;
+      }
+      
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Creating release...';
+      btn.disabled = true;
+      
+      // Get current version
+      try {
+        const res = await fetch('VERSION.json');
+        const versionData = await res.json();
+        const currentVersion = versionData.version;
+        
+        // Parse version and increment
+        const [major, minor, patch] = currentVersion.split('.').map(Number);
+        let newVersion;
+        if (releaseType === 'major') {
+          newVersion = `${major + 1}.0.0`;
+        } else if (releaseType === 'minor') {
+          newVersion = `${major}.${minor + 1}.0`;
+        } else {
+          newVersion = `${major}.${minor}.${patch + 1}`;
+        }
+        
+        alert(`Release v${newVersion} would be created with:\n\n${changes}\n\nNote: This would update VERSION.json and trigger a GitHub release. This feature is under development.`);
+        
+        closeReleaseModal();
+        document.getElementById('release-changes').value = '';
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+      
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
     
     async function submitIssue() {
