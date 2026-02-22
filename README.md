@@ -116,6 +116,32 @@ The Hive will create a bugfix workflow.
 
 The linked Hive automatically polls GitHub repositories for new issues every 60 seconds and creates fix workflows automatically.
 
+### Workflow Types
+
+The Hive supports three workflow types:
+
+| Type | Button | Phases | Default Release |
+|------|--------|--------|-----------------|
+| Bug Fix | 🐛 Report Bug | planning → setup → implementing → verifying → testing → security → reviewing | Patch |
+| Improvement | 💡 Submit Idea | research → design → implementing → verifying → testing → reviewing | Minor |
+| Security | 🔒 Security Review | scanning → analysis → remediation → reviewing | Patch |
+
+### Breaking Changes
+
+Each workflow modal has a "This is a breaking change" checkbox:
+- When checked, it marks the workflow as a breaking change
+- Breaking changes trigger **major** releases (e.g., 1.0.0 → 2.0.0)
+- Non-breaking changes trigger patch or minor releases based on workflow type
+
+### Version & Releases
+
+The Hive uses [Semantic Versioning](https://semver.org/):
+- **Patch** (1.0.0 → 1.0.1) - Bug fixes
+- **Minor** (1.0.0 → 1.1.0) - New features
+- **Major** (1.0.0 → 2.0.0) - Breaking changes
+
+Version is tracked in `VERSION.json` and releases are created automatically via GitHub Actions when VERSION.json is updated.
+
 ## API
 
 ### Workflows

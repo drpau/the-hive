@@ -2,6 +2,11 @@
 
 All notable changes to The Hive will be documented in this file.
 
+## [1.0.2] - 2026-02-22
+
+### Added
+- README documentation for workflow types, breaking changes, and versioning
+
 ## [1.0.1] - 2026-02-22
 
 ### Added

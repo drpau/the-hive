@@ -1,10 +1,8 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "released": "2026-02-22",
   "type": "patch",
   "changes": [
-    "Added breaking change checkbox to bug report, idea, and security modals",
-    "Release button UI with major/minor/patch version bump options",
-    "Version tracking and automatic GitHub releases"
+    "Updated README with workflow types, breaking changes, and versioning documentation"
   ]
 }
