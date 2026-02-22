@@ -1,0 +1,54 @@
+name: Create Release
+
+on:
+  push:
+    paths:
+      - 'VERSION.json'
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat VERSION.json | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Read changelog
+        id: changelog
+        run: |
+          CHANGES=$(cat CHANGELOG.md | python3 -c "
+import json,sys
+content = sys.stdin.read()
+# Extract changes for current version
+import re
+match = re.search(r'## \[([^\]]+)\](.+?)(?=## \[|$)', content, re.DOTALL)
+if match:
+    print(match.group(2).strip())
+else:
+    print('See CHANGELOG.md for details')
+")
+          echo "changes<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release v${{ steps.version.outputs.version }}
+          body: |
+            ${{ steps.changelog.outputs.changes }}
+          draft: false
+          prerelease: false
