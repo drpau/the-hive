@@ -285,6 +285,7 @@
       <div class="form-row" style="margin-top: 10px;">
         <button onclick="showReportIssue()" style="background: #f85149;">🐛 Report Bug</button>
         <button onclick="showIdea()" style="background: #238636;">💡 Submit Idea</button>
+        <button onclick="showSecurity()" style="background: #a371f7;">🔒 Security Review</button>
       </div>
     </div>
     
@@ -330,6 +331,36 @@
             <textarea id="idea-description" rows="4" placeholder="Describe your idea or improvement..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
           </div>
           <button onclick="submitIdea()" style="background: #238636;">Create Improvement Workflow</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Security Modal -->
+    <div class="modal-overlay" id="security-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>🔒 Request Security Review</h3>
+          <button class="modal-close" onclick="closeSecurityModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">GitHub Repository</label>
+            <input type="text" id="security-repo" placeholder="https://github.com/user/repo" style="width: 100%;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Security Focus Area</label>
+            <select id="security-type" style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;">
+              <option value="full">Full Security Audit</option>
+              <option value="dependencies">Dependency Review (check for CVEs)</option>
+              <option value="code">Code Security Review</option>
+              <option value="config">Configuration Security</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Additional Context</label>
+            <textarea id="security-description" rows="4" placeholder="Any specific concerns or areas to focus on..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <button onclick="submitSecurity()" style="background: #a371f7;">Create Security Workflow</button>
         </div>
       </div>
     </div>
@@ -564,6 +595,56 @@
           closeIdeaModal();
           document.getElementById('idea-repo').value = '';
           document.getElementById('idea-description').value = '';
+          loadData();
+        } else {
+          alert('Failed to create workflow');
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+    
+    function showSecurity() {
+      document.getElementById('security-modal').classList.add('active');
+    }
+    
+    function closeSecurityModal() {
+      document.getElementById('security-modal').classList.remove('active');
+    }
+    
+    async function submitSecurity() {
+      const repo = document.getElementById('security-repo').value;
+      const securityType = document.getElementById('security-type').value;
+      const description = document.getElementById('security-description').value;
+      
+      if (!repo) {
+        alert('Please fill in repository');
+        return;
+      }
+      
+      const typeLabels = {
+        full: 'Full Security Audit',
+        dependencies: 'Dependency CVE Review',
+        code: 'Code Security Review',
+        config: 'Configuration Security Review'
+      };
+      
+      try {
+        const res = await fetch('/api/workflows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id: 'security-' + Date.now(), 
+            task: `Security Review (${typeLabels[securityType]}): ${description || 'Review code for security vulnerabilities'}`, 
+            repo,
+            type: 'security'
+          })
+        });
+        
+        if (res.ok) {
+          closeSecurityModal();
+          document.getElementById('security-repo').value = '';
+          document.getElementById('security-description').value = '';
           loadData();
         } else {
           alert('Failed to create workflow');

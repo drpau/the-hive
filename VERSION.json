@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "released": "2026-02-22",
+  "changes": [
+    "Security workflow added",
+    "Improvement workflow phases: research, design, implementing, verifying, testing, reviewing",
+    "Bugfix workflow phases: planning, setup, implementing, verifying, testing, security, reviewing",
+    "Real-time agent output logging",
+    "Auto-close GitHub issues after PR merged",
+    "GitHub issue polling",
+    "Dashboard with bug reporting and idea submission"
+  ]
+}

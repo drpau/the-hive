@@ -231,9 +231,89 @@ PR_URL: [link to PR or "none"]`
 
 const IMPROVEMENT_PHASE_ORDER = ['research', 'design', 'implementing', 'verifying', 'testing', 'reviewing'];
 
+// Security workflow phases
+const SECURITY_PHASES = {
+  scanning: {
+    prompt: (task, repo, runId) => `You are a security engineer. Perform initial vulnerability scanning.
+
+Task: ${task}
+Repository: ${repo}
+
+Run automated security scans:
+1. Check for known vulnerabilities in dependencies (npm audit, safety, etc.)
+2. Run static analysis tools if available
+3. Check for hardcoded secrets/credentials
+4. Scan for common vulnerability patterns
+
+Reply:
+STATUS: done
+VULNERABILITIES: [list found]
+SEVERITY: [critical/high/medium/low/none]`
+  },
+  analysis: {
+    prompt: (task, repo, runId) => `You are a security engineer. Perform deep security analysis.
+
+Task: ${task}
+Repository: ${repo}
+
+Manual security review:
+1. OWASP Top 10 check (injection, auth issues, etc.)
+2. Input validation review
+3. Authentication/authorization review
+4. Data protection review
+5. API security review
+
+Reply:
+STATUS: done
+ISSUES: [list issues found]
+RISK_LEVEL: [critical/high/medium/low]`
+  },
+  remediation: {
+    prompt: (task, repo, runId) => `You are a security engineer. Propose security fixes.
+
+Task: ${task}
+Repository: ${repo}
+
+For any security issues found:
+1. Provide specific fix recommendations
+2. Create patches if possible
+3. Document security findings
+
+Reply:
+STATUS: done
+FIXES: [fixes applied or recommended]
+SUMMARY: [overall security posture]`
+  },
+  reviewing: {
+    prompt: (task, repo, runId) => `You are a security reviewer. Create security report and PR.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Create a SECURITY.md file with findings if it doesn't exist
+2. Commit any security fixes
+3. Create a PR with security changes
+4. Include security findings summary
+
+Reply:
+STATUS: done
+PR_URL: [link to PR or "none"]
+SECURITY_REPORT: [summary]`
+  }
+};
+
+const SECURITY_PHASE_ORDER = ['scanning', 'analysis', 'remediation', 'reviewing'];
+
 // Get next phase based on workflow type
 function getNextPhase(currentPhase, workflowType = 'bugfix') {
-  const phases = workflowType === 'improvement' ? IMPROVEMENT_PHASE_ORDER : PHASE_ORDER;
+  let phases;
+  if (workflowType === 'improvement') {
+    phases = IMPROVEMENT_PHASE_ORDER;
+  } else if (workflowType === 'security') {
+    phases = SECURITY_PHASE_ORDER;
+  } else {
+    phases = PHASE_ORDER;
+  }
   const idx = phases.indexOf(currentPhase);
   if (idx < 0 || idx >= phases.length - 1) return null;
   return phases[idx + 1];
@@ -242,7 +322,14 @@ function getNextPhase(currentPhase, workflowType = 'bugfix') {
 // Run an agent task
 async function runAgentTask(workflow, phase) {
   const workflowType = workflow.type || 'bugfix';
-  const phaseSet = workflowType === 'improvement' ? IMPROVEMENT_PHASES : PHASES;
+  let phaseSet;
+  if (workflowType === 'improvement') {
+    phaseSet = IMPROVEMENT_PHASES;
+  } else if (workflowType === 'security') {
+    phaseSet = SECURITY_PHASES;
+  } else {
+    phaseSet = PHASES;
+  }
   const phaseInfo = phaseSet[phase];
   if (!phaseInfo) return { ok: false, error: 'Unknown phase' };
   
@@ -368,7 +455,14 @@ async function runAgentTask(workflow, phase) {
 async function processWorkflow(workflow) {
   const phase = workflow.phase;
   const workflowType = workflow.type || 'bugfix';
-  const phaseSet = workflowType === 'improvement' ? IMPROVEMENT_PHASES : PHASES;
+  let phaseSet;
+  if (workflowType === 'improvement') {
+    phaseSet = IMPROVEMENT_PHASES;
+  } else if (workflowType === 'security') {
+    phaseSet = SECURITY_PHASES;
+  } else {
+    phaseSet = PHASES;
+  }
   
   if (phase === 'done' || workflow.status === 'complete') {
     console.log(`Workflow ${workflow.id} already complete`);
@@ -376,10 +470,16 @@ async function processWorkflow(workflow) {
   }
   
   // If starting fresh, set initial phase based on workflow type
-  if (phase === 'planning' && workflowType === 'improvement') {
-    console.log(`Improvement workflow - updating initial phase to research`);
-    await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { phase: 'research' });
-    return;
+  if (phase === 'planning') {
+    if (workflowType === 'improvement') {
+      console.log(`Improvement workflow - updating initial phase to research`);
+      await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { phase: 'research' });
+      return;
+    } else if (workflowType === 'security') {
+      console.log(`Security workflow - updating initial phase to scanning`);
+      await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { phase: 'scanning' });
+      return;
+    }
   }
   
   const phaseInfo = phaseSet[phase];
