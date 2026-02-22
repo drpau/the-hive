@@ -56,10 +56,10 @@ db.exec(`
 
 // Workflow operations
 export const Workflows = {
-  create(id, task, repo, name = 'default') {
+  create(id, task, repo, name = 'default', type = 'bugfix') {
     const t = now();
-    const stmt = db.prepare('INSERT INTO workflows (id, task, repo, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)');
-    stmt.run(id, task, repo || '', name, t, t);
+    const stmt = db.prepare('INSERT INTO workflows (id, task, repo, name, type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    stmt.run(id, task, repo || '', name, type, t, t);
     return this.get(id);
   },
 

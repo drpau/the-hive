@@ -367,13 +367,22 @@ async function runAgentTask(workflow, phase) {
 // Process a workflow
 async function processWorkflow(workflow) {
   const phase = workflow.phase;
+  const workflowType = workflow.type || 'bugfix';
+  const phaseSet = workflowType === 'improvement' ? IMPROVEMENT_PHASES : PHASES;
   
   if (phase === 'done' || workflow.status === 'complete') {
     console.log(`Workflow ${workflow.id} already complete`);
     return;
   }
   
-  const phaseInfo = PHASES[phase];
+  // If starting fresh, set initial phase based on workflow type
+  if (phase === 'planning' && workflowType === 'improvement') {
+    console.log(`Improvement workflow - updating initial phase to research`);
+    await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { phase: 'research' });
+    return;
+  }
+  
+  const phaseInfo = phaseSet[phase];
   if (!phaseInfo) {
     console.log(`Unknown phase: ${phase} for workflow ${workflow.id}`);
     return;
