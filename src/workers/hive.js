@@ -224,10 +224,6 @@ STATUS: done
 TESTS: pass/fail
 DETAILS: [verification results]`
   },
-STATUS: done
-TESTS: pass/fail
-DETAILS: [test results]`
-  },
   reviewing: {
     prompt: (task, repo, runId) => `You are a code reviewer. Create a PR.
 
