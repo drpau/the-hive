@@ -84,17 +84,21 @@ VERIFIED: yes/no
 ISSUES: [any issues found]`
   },
   testing: {
-    prompt: (task, repo, runId) => `You are a tester. Run tests.
+    prompt: (task, repo, runId) => `You are a QA engineer. Verify the implementation works.
 
 Task: ${task}
 Repository: ${repo}
 
-Run tests and report results.
+For browser-based games/apps:
+1. Verify HTML/CSS/JS syntax is valid
+2. Check all referenced assets (images, fonts) exist
+3. Verify no console errors in code
+4. For HTML files: open in browser and verify structure
 
 Reply:
 STATUS: done
 TESTS: pass/fail
-DETAILS: [test results]`
+DETAILS: [verification results]`
   },
   security: {
     prompt: (task, repo, runId) => `You are a security engineer. Review the code for vulnerabilities.
@@ -205,14 +209,21 @@ VERIFIED: yes/no
 ISSUES: [any issues]`
   },
   testing: {
-    prompt: (task, repo, runId) => `You are a tester. Test the implementation.
+    prompt: (task, repo, runId) => `You are a QA engineer. Verify the implementation works.
 
 Task: ${task}
 Repository: ${repo}
 
-Run tests and verify everything works.
+For browser-based games/apps:
+1. Verify HTML/CSS/JS syntax is valid
+2. Check all referenced assets exist
+3. Verify no console errors
 
 Reply:
+STATUS: done
+TESTS: pass/fail
+DETAILS: [verification results]`
+  },
 STATUS: done
 TESTS: pass/fail
 DETAILS: [test results]`
