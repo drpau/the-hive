@@ -2,6 +2,17 @@
 
 All notable changes to The Hive will be documented in this file.
 
+## [1.0.1] - 2026-02-22
+
+### Added
+- Breaking change checkbox in each workflow modal (bug, idea, security)
+- Release button with version bump options (major/minor/patch)
+- Version tracking with VERSION.json
+- Automatic GitHub release workflow
+
+### Changed
+- Updated GitHub release action to use softprops/action-gh-release
+
 ## [1.0.0] - 2026-02-22
 
 ### Added

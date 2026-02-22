@@ -1,14 +1,10 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "released": "2026-02-22",
-  "type": "major",
+  "type": "patch",
   "changes": [
-    "Security workflow added",
-    "Improvement workflow phases: research, design, implementing, verifying, testing, reviewing",
-    "Bugfix workflow phases: planning, setup, implementing, verifying, testing, security, reviewing",
-    "Real-time agent output logging",
-    "Auto-close GitHub issues after PR merged",
-    "GitHub issue polling",
-    "Dashboard with bug reporting and idea submission"
+    "Added breaking change checkbox to bug report, idea, and security modals",
+    "Release button UI with major/minor/patch version bump options",
+    "Version tracking and automatic GitHub releases"
   ]
 }

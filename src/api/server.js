@@ -48,10 +48,10 @@ app.get('/api/workflows/:id', (req, res) => {
 
 // Create workflow
 app.post('/api/workflows', (req, res) => {
-  const { id, task, repo, name, type } = req.body;
+  const { id, task, repo, name, type, breaking } = req.body;
   if (!id || !task) return res.status(400).json({ error: 'id and task required' });
   
-  const workflow = Workflows.create(id, task, repo || '', name || 'default', type || 'bugfix');
+  const workflow = Workflows.create(id, task, repo || '', name || 'default', type || 'bugfix', breaking || false);
   Logs.add(id, null, `Workflow created: ${task}`);
   
   // Broadcast to WebSocket clients

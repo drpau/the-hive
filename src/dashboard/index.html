@@ -310,6 +310,11 @@
             <label style="display: block; margin-bottom: 5px; color: #8b949e;">Bug Description</label>
             <textarea id="issue-description" rows="4" placeholder="Describe what's broken..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
           </div>
+          <div style="margin-bottom: 15px;">
+            <label style="color: #8b949e;">
+              <input type="checkbox" id="issue-breaking" style="margin-right: 8px;">This is a breaking change (will trigger major release)
+            </label>
+          </div>
           <button onclick="submitIssue()" style="background: #f85149;">Create Fix Workflow</button>
         </div>
       </div>
@@ -330,6 +335,11 @@
           <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: #8b949e;">Your Idea</label>
             <textarea id="idea-description" rows="4" placeholder="Describe your idea or improvement..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="color: #8b949e;">
+              <input type="checkbox" id="idea-breaking" style="margin-right: 8px;">This is a breaking change (will trigger major release)
+            </label>
           </div>
           <button onclick="submitIdea()" style="background: #238636;">Create Improvement Workflow</button>
         </div>
@@ -360,6 +370,11 @@
           <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: #8b949e;">Additional Context</label>
             <textarea id="security-description" rows="4" placeholder="Any specific concerns or areas to focus on..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="color: #8b949e;">
+              <input type="checkbox" id="security-breaking" style="margin-right: 8px;">This is a breaking change (will trigger major release)
+            </label>
           </div>
           <button onclick="submitSecurity()" style="background: #a371f7;">Create Security Workflow</button>
         </div>
@@ -599,6 +614,7 @@
     async function submitIdea() {
       const repo = document.getElementById('idea-repo').value;
       const description = document.getElementById('idea-description').value;
+      const breaking = document.getElementById('idea-breaking').checked;
       
       if (!repo || !description) {
         alert('Please fill in repository and idea');
@@ -613,7 +629,8 @@
             id: 'idea-' + Date.now(), 
             task: `Implement improvement: ${description}`, 
             repo,
-            type: 'improvement'
+            type: 'improvement',
+            breaking: breaking
           })
         });
         
@@ -642,6 +659,7 @@
       const repo = document.getElementById('security-repo').value;
       const securityType = document.getElementById('security-type').value;
       const description = document.getElementById('security-description').value;
+      const breaking = document.getElementById('security-breaking').checked;
       
       if (!repo) {
         alert('Please fill in repository');
@@ -663,7 +681,8 @@
             id: 'security-' + Date.now(), 
             task: `Security Review (${typeLabels[securityType]}): ${description || 'Review code for security vulnerabilities'}`, 
             repo,
-            type: 'security'
+            type: 'security',
+            breaking: breaking
           })
         });
         
@@ -735,6 +754,7 @@
       const repo = document.getElementById('issue-repo').value;
       const issueNum = document.getElementById('issue-number').value;
       const description = document.getElementById('issue-description').value;
+      const breaking = document.getElementById('issue-breaking').checked;
       
       if (!repo || !description) {
         alert('Please fill in repository and description');
@@ -756,7 +776,8 @@
             id: 'bugfix-' + Date.now(), 
             task, 
             repo,
-            type: 'bugfix'
+            type: 'bugfix',
+            breaking: breaking
           })
         });
         
