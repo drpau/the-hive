@@ -1,10 +1,9 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "released": "2026-02-22",
-  "type": "minor",
+  "type": "patch",
   "changes": [
-    "Added Docs Update workflow type (research → updating → reviewing)",
-    "Added CONTRIBUTING.md with documentation rule",
-    "Added documentation update to workflow types in README"
+    "Removed separate Docs Update workflow - docs now updated as part of feature workflows",
+    "Updated reviewing phases to automatically update documentation"
   ]
 }

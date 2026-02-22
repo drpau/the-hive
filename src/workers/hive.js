@@ -122,14 +122,18 @@ Task: ${task}
 Repository: ${repo}
 
 1. Make sure changes are committed
-2. Create a pull request with good description
-3. If this fixes a GitHub issue (e.g., "Fix GitHub issue #N"), close the issue after PR is created
-4. Include testing instructions
+2. Update documentation if needed (README.md, CONFIG.md, etc.) to reflect changes
+3. Create a pull request with good description
+4. If this fixes a GitHub issue (e.g., "Fix GitHub issue #N"), close the issue after PR is created
+5. Include testing instructions
+
+IMPORTANT: If this change impacts how users use the software, update the relevant documentation.
 
 Reply:
 STATUS: done
 PR_URL: [link to PR or "none if not pushed"]
-ISSUE_CLOSED: yes/no`
+ISSUE_CLOSED: yes/no
+DOCS_UPDATED: yes/no`
   }
 };
 
@@ -220,12 +224,16 @@ Task: ${task}
 Repository: ${repo}
 
 1. Make sure changes are committed
-2. Create a pull request with good description
-3. Include design rationale and testing instructions
+2. Update documentation if needed (README.md, CONFIG.md, etc.) to reflect changes
+3. Create a pull request with good description
+4. Include design rationale and testing instructions
+
+IMPORTANT: If this change impacts how users use the software, update the relevant documentation.
 
 Reply:
 STATUS: done
-PR_URL: [link to PR or "none"]`
+PR_URL: [link to PR or "none"]
+DOCS_UPDATED: yes/no`
   }
 };
 
@@ -291,7 +299,8 @@ Task: ${task}
 Repository: ${repo}
 
 1. Create a SECURITY.md file with findings if it doesn't exist
-2. Commit any security fixes
+2. Update documentation if needed to document security changes
+3. Commit any security fixes
 3. Create a PR with security changes
 4. Include security findings summary
 

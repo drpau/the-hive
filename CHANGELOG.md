@@ -2,6 +2,16 @@
 
 All notable changes to The Hive will be documented in this file.
 
+## [1.0.4] - 2026-02-22
+
+### Changed
+- Documentation updates now happen automatically as part of feature workflows (not separate)
+- Reviewing phase includes documentation update for bugfix, improvement, and security workflows
+- Removed Docs Update button and workflow
+
+### Removed
+- Separate Docs Update workflow (docs now updated in reviewing phase)
+
 ## [1.0.3] - 2026-02-22
 
 ### Added
