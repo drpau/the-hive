@@ -284,6 +284,7 @@
       </div>
       <div class="form-row" style="margin-top: 10px;">
         <button onclick="showReportIssue()" style="background: #f85149;">🐛 Report Bug</button>
+        <button onclick="showIdea()" style="background: #238636;">💡 Submit Idea</button>
       </div>
     </div>
     
@@ -308,6 +309,27 @@
             <textarea id="issue-description" rows="4" placeholder="Describe what's broken..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
           </div>
           <button onclick="submitIssue()" style="background: #f85149;">Create Fix Workflow</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Idea Modal -->
+    <div class="modal-overlay" id="idea-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>💡 Submit Product Idea</h3>
+          <button class="modal-close" onclick="closeIdeaModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">GitHub Repository</label>
+            <input type="text" id="idea-repo" placeholder="https://github.com/user/repo" style="width: 100%;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #8b949e;">Your Idea</label>
+            <textarea id="idea-description" rows="4" placeholder="Describe your idea or improvement..." style="width: 100%; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 10px; color: #fff;"></textarea>
+          </div>
+          <button onclick="submitIdea()" style="background: #238636;">Create Improvement Workflow</button>
         </div>
       </div>
     </div>
@@ -507,6 +529,48 @@
     
     function closeIssueModal() {
       document.getElementById('issue-modal').classList.remove('active');
+    }
+    
+    function showIdea() {
+      document.getElementById('idea-modal').classList.add('active');
+    }
+    
+    function closeIdeaModal() {
+      document.getElementById('idea-modal').classList.remove('active');
+    }
+    
+    async function submitIdea() {
+      const repo = document.getElementById('idea-repo').value;
+      const description = document.getElementById('idea-description').value;
+      
+      if (!repo || !description) {
+        alert('Please fill in repository and idea');
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/workflows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id: 'idea-' + Date.now(), 
+            task: `Implement improvement: ${description}`, 
+            repo,
+            type: 'improvement'
+          })
+        });
+        
+        if (res.ok) {
+          closeIdeaModal();
+          document.getElementById('idea-repo').value = '';
+          document.getElementById('idea-description').value = '';
+          loadData();
+        } else {
+          alert('Failed to create workflow');
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
     
     async function submitIssue() {

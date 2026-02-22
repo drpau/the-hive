@@ -96,6 +96,25 @@ STATUS: done
 TESTS: pass/fail
 DETAILS: [test results]`
   },
+  security: {
+    prompt: (task, repo, runId) => `You are a security engineer. Review the code for vulnerabilities.
+
+Task: ${task}
+Repository: ${repo}
+
+Perform a security review of the changes:
+1. Check for OWASP Top 10 vulnerabilities (injection, auth issues, etc.)
+2. Look for hardcoded secrets/credentials
+3. Check for unsafe input handling
+4. Review dependency versions for known CVEs
+5. Check file permissions and access controls
+
+Reply:
+STATUS: done
+SECURITY_PASS: yes/no
+VULNERABILITIES: [list any found, or "none"]
+RECOMMENDATIONS: [security improvements if any]`
+  },
   reviewing: {
     prompt: (task, repo, runId) => `You are a code reviewer. Create a PR and close the linked issue.
 
@@ -114,18 +133,117 @@ ISSUE_CLOSED: yes/no`
   }
 };
 
-const PHASE_ORDER = ['planning', 'setup', 'implementing', 'verifying', 'testing', 'reviewing'];
+const PHASE_ORDER = ['planning', 'setup', 'implementing', 'verifying', 'testing', 'security', 'reviewing'];
 
-// Get next phase
-function getNextPhase(currentPhase) {
-  const idx = PHASE_ORDER.indexOf(currentPhase);
-  if (idx < 0 || idx >= PHASE_ORDER.length - 1) return null;
-  return PHASE_ORDER[idx + 1];
+// Improvement workflow phases
+const IMPROVEMENT_PHASES = {
+  research: {
+    prompt: (task, repo, runId) => `You are a product researcher. Research and analyze this improvement idea.
+
+Task: ${task}
+Repository: ${repo}
+
+Research:
+1. Understand the current state of the codebase
+2. Look at similar features in other projects
+3. Identify technical considerations and constraints
+4. Analyze user impact and value
+
+Reply:
+STATUS: done
+RESEARCH: [research findings]
+TECH_CONSIDERATIONS: [technical constraints]
+VALUE: [expected user value]`
+  },
+  design: {
+    prompt: (task, repo, runId) => `You are a product designer. Design a solution for this improvement.
+
+Task: ${task}
+Repository: ${repo}
+
+Design:
+1. Propose 2-3 possible approaches
+2. Evaluate pros/cons of each
+3. Recommend the best approach
+4. Create a simple spec
+
+Reply:
+STATUS: done
+APPROACHES: [options considered]
+RECOMMENDED: [recommended approach]
+SPEC: [specification]`
+  },
+  implementing: {
+    prompt: (task, repo, runId) => `You are a software developer. Implement the improvement.
+
+Task: ${task}
+Repository: ${repo}
+
+Implement the improvement following the design spec. Make small, incremental commits.
+
+Reply:
+STATUS: done
+CHANGES: [summary of changes]`
+  },
+  verifying: {
+    prompt: (task, repo, runId) => `You are a QA engineer. Verify the implementation.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Verify implementation matches design
+2. Check for edge cases
+3. Test user experience
+
+Reply:
+STATUS: done
+VERIFIED: yes/no
+ISSUES: [any issues]`
+  },
+  testing: {
+    prompt: (task, repo, runId) => `You are a tester. Test the implementation.
+
+Task: ${task}
+Repository: ${repo}
+
+Run tests and verify everything works.
+
+Reply:
+STATUS: done
+TESTS: pass/fail
+DETAILS: [test results]`
+  },
+  reviewing: {
+    prompt: (task, repo, runId) => `You are a code reviewer. Create a PR.
+
+Task: ${task}
+Repository: ${repo}
+
+1. Make sure changes are committed
+2. Create a pull request with good description
+3. Include design rationale and testing instructions
+
+Reply:
+STATUS: done
+PR_URL: [link to PR or "none"]`
+  }
+};
+
+const IMPROVEMENT_PHASE_ORDER = ['research', 'design', 'implementing', 'verifying', 'testing', 'reviewing'];
+
+// Get next phase based on workflow type
+function getNextPhase(currentPhase, workflowType = 'bugfix') {
+  const phases = workflowType === 'improvement' ? IMPROVEMENT_PHASE_ORDER : PHASE_ORDER;
+  const idx = phases.indexOf(currentPhase);
+  if (idx < 0 || idx >= phases.length - 1) return null;
+  return phases[idx + 1];
 }
 
 // Run an agent task
 async function runAgentTask(workflow, phase) {
-  const phaseInfo = PHASES[phase];
+  const workflowType = workflow.type || 'bugfix';
+  const phaseSet = workflowType === 'improvement' ? IMPROVEMENT_PHASES : PHASES;
+  const phaseInfo = phaseSet[phase];
   if (!phaseInfo) return { ok: false, error: 'Unknown phase' };
   
   let repo = workflow.repo;
@@ -295,7 +413,7 @@ async function processWorkflow(workflow) {
         level: 'info'
       });
       
-      const nextPhase = getNextPhase(phase);
+      const nextPhase = getNextPhase(phase, workflow.type || 'bugfix');
       if (nextPhase) {
         await apiCall(`/api/workflows/${workflow.id}`, 'PATCH', { 
           phase: nextPhase,
