@@ -448,7 +448,6 @@ async function runAgentTask(workflow, phase) {
       'agent',
       '--session-id', sessionId,
       '--message', prompt,
-      '--model', 'openrouter/openai/gpt-5.2',
       '--thinking', 'medium',
       '--timeout', '600'
     ];
