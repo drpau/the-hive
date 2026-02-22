@@ -449,7 +449,7 @@ async function runAgentTask(workflow, phase) {
       '--session-id', sessionId,
       '--message', prompt,
       '--thinking', 'medium',
-      '--timeout', '300'
+      '--timeout', '600'
     ];
     
     console.log(`Running: ${cmd} ${args.join(' ')}`);
